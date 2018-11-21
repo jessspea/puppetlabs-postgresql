@@ -23,6 +23,7 @@ class postgresql::params inherits postgresql::globals {
   $manage_recovery_conf       = pick($manage_recovery_conf, false)
   $package_ensure             = 'present'
   $module_workdir             = pick($module_workdir,'/tmp')
+  $remote_only                = false
 
   # Amazon Linux's OS Family is 'Linux', operating system 'Amazon'.
   case $::osfamily {

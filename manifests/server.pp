@@ -5,6 +5,8 @@ class postgresql::server (
   $package_name               = $postgresql::params::server_package_name,
   $package_ensure             = $postgresql::params::package_ensure,
 
+  $remote_only                = $postgresql::params::remote_only,
+
   $plperl_package_name        = $postgresql::params::plperl_package_name,
   $plpython_package_name      = $postgresql::params::plpython_package_name,
 
@@ -76,36 +78,38 @@ class postgresql::server (
     warning('Passing "createdb_path" to postgresql::server is deprecated, it can be removed safely for the same behaviour')
   }
 
-  # Reload has its own ordering, specified by other defines
-  class { "${pg}::reload": require => Class["${pg}::install"] }
+  if ! $remote_only {
+    # Reload has its own ordering, specified by other defines
+    class { "${pg}::reload": require => Class["${pg}::install"] }
 
-  contain postgresql::server::install
-  contain postgresql::server::initdb
-  contain postgresql::server::config
-  contain postgresql::server::service
-  contain postgresql::server::passwd
+    contain postgresql::server::install
+    contain postgresql::server::initdb
+    contain postgresql::server::config
+    contain postgresql::server::service
+    contain postgresql::server::passwd
 
-  Class['postgresql::server::install']
-  -> Class['postgresql::server::initdb']
-  -> Class['postgresql::server::config']
-  -> Class['postgresql::server::service']
-  -> Class['postgresql::server::passwd']
+    Class['postgresql::server::install']
+    -> Class['postgresql::server::initdb']
+    -> Class['postgresql::server::config']
+    -> Class['postgresql::server::service']
+    -> Class['postgresql::server::passwd']
 
-  $roles.each |$rolename, $role| {
-    postgresql::server::role { $rolename:
-      * => $role,
+    $roles.each |$rolename, $role| {
+      postgresql::server::role { $rolename:
+        * => $role,
+      }
     }
-  }
 
-  $config_entries.each |$entry, $value| {
-    postgresql::server::config_entry { $entry:
-      value => $value,
+    $config_entries.each |$entry, $value| {
+      postgresql::server::config_entry { $entry:
+        value => $value,
+      }
     }
-  }
 
-  $pg_hba_rules.each |$rule_name, $rule| {
-    postgresql::server::pg_hba_rule { $rule_name:
-      * => $rule,
+    $pg_hba_rules.each |$rule_name, $rule| {
+      postgresql::server::pg_hba_rule { $rule_name:
+        * => $rule,
+      }
     }
   }
 }

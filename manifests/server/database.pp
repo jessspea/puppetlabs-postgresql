@@ -31,6 +31,12 @@ define postgresql::server::database(
     $port = $postgresql::server::port
   }
 
+  if $connect_settings != undef and has_key( $connect_settings, 'PGHOST') and $connect_settings['PGHOST'] != '127.0.0.1' {
+    $requires  = undef
+  } else {
+    $requires  = Class['postgresql::server::service']
+  }
+
   # Set the defaults for the postgresql_psql resource
   Postgresql_psql {
     db               => $default_db,
@@ -76,7 +82,7 @@ define postgresql::server::database(
   postgresql_psql { "CREATE DATABASE \"${dbname}\"":
     command => "CREATE DATABASE \"${dbname}\" WITH ${template_option} ${encoding_option} ${locale_option} ${tablespace_option}",
     unless  => "SELECT 1 FROM pg_database WHERE datname = '${dbname}'",
-    require => Class['postgresql::server::service']
+    require => $requires,
   }
 
   # This will prevent users from connecting to the database unless they've been
